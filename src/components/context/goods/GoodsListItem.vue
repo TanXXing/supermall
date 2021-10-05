@@ -27,7 +27,7 @@ export default {
 .goods-item {
   padding-bottom: 40px;
   position: relative;
-  width: 48%;
+  width: 47%;
 }
 .goods-item img {
   width: 100%;
