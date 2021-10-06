@@ -4,22 +4,27 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-<!--使用HomeSwiper组件-->
-    <home-swiper :banners="banners" />
 
-<!-- 使用RecommendView这个组件-->
-    <recommend-view :recommends="recommends" />
+<!-- 使用封装好的scroll托管滚动区域-->
+    <scroll class="content" ref="scroll">
+      <!--使用HomeSwiper组件-->
+      <home-swiper :banners="banners" />
 
-<!--既然是组价化开发的话，我更希望使用组件的形式来开发，也就是把这里抽成一个个的组件，而不是，直接在这里使用image标签-->
-    <feature-view />
+      <!-- 使用RecommendView这个组件-->
+      <recommend-view :recommends="recommends" />
 
-<!-- 使用TabControl组件-->
-    <tab-control :titles="['流行', '新款', '精选']"  class="tab-control"/>
+      <!--既然是组价化开发的话，我更希望使用组件的形式来开发，也就是把这里抽成一个个的组件，而不是，直接在这里使用image标签-->
+      <feature-view />
 
-<!--  使用GoodsList这个组件-->
-    <goods-list :goods="goods.pop.list"/>
+      <!-- 使用TabControl组件-->
+      <tab-control :titles="['流行', '新款', '精选']"  class="tab-control" @tabClick="tabClick"/>
 
-    <ul>
+      <!--  使用GoodsList这个组件，这个地方的pop是不能写死的，不能进行硬编码-->
+      <goods-list :goods="showGoods" />
+    </scroll>
+
+    <back-top @click.native="backTopClick" />
+<!--    <ul>
       <li>列表1</li>
       <li>列表2</li>
       <li>列表3</li>
@@ -120,7 +125,7 @@
       <li>列表98</li>
       <li>列表99</li>
       <li>列表100</li>
-    </ul>
+    </ul>-->
 
     </div>
 </template>
@@ -146,11 +151,14 @@ import FeatureView from "./childComps/FeatureView";
 //导入NavBar组件
 import NavBar from 'components/common/navbar/NavBar';
 
+import Scroll from 'components/common/scroll/Scroll'
 
 //导入components下面的context里面的组件
 import TabControl from 'components/context/tabControl/TabControl'
 
 import GoodsList from 'components/context/goods/GoodsList'
+
+import BackTop from 'components/context/backTop/BackTop';
 
 //导入home.js这个包含请求的模块
 import {getHomeMultidata, getHomeGoods} from 'network/home.js'
@@ -164,7 +172,9 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
       RecommendView,
       FeatureView,
       TabControl,
-      GoodsList
+      GoodsList,
+      Scroll,
+      BackTop
     },
     data() {
       return {
@@ -175,7 +185,14 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
           pop: {page: 0, list: []},
           new: {page: 0, list: []},
           sell: {page: 0, list: []},
-        }
+        },
+        //当前类型的默认值
+        currentType: 'pop'
+      }
+    },
+    computed: {
+      showGoods() {
+        return this.goods[this.currentType].list
       }
     },
     /*什么时候发送请求呢？这个请求是需要在home组件里面发起的，我们希望当home组件被创建时，就发送这个请求，但是这个请求
@@ -183,7 +200,7 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
     * ，这意味者，当这个函数结束的时候(里面的代码被放到执行栈完全执行完之后)，它里面的局部变量会被垃圾回收，那么我们如何获取
     * 请求得到的数据，以及把它打印出来,并保存呢？*/
     created() {
-      this.getHomeMultidataInMeghods()
+      this.getHomeMultidataInMethods()
 
       //请求商品的数据
       this.getHomeGoodsInMethods('pop')
@@ -192,7 +209,18 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
     },
 
     methods: {
-      getHomeMultidataInMeghods() {
+      tabClick(index) {
+        switch(index) {
+          case 0: this.currentType = 'pop';
+                  break;
+          case 1: this.currentType = 'new';
+                  break;
+          case 2: this.currentType = 'sell';
+        }
+      },
+
+      /*下面是请求数据的方法*/
+      getHomeMultidataInMethods() {
         getHomeMultidata().then(res => {
           // console.log(res.data)
           // this.results = res.data
@@ -219,8 +247,12 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
           //...运算符的扩展作用
           this.goods[type].list.push(...res.data.list)
           this.goods[type].page++
-          console.log(res)
         })
+      },
+
+      backTopClick() {
+        // this.$refs.scroll.scroll.scrollTo(0,0, 500)
+        this.$refs.scroll.scrollTo(0, 0, 1000)
       }
     }
   }
@@ -228,7 +260,10 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
 
 <style scoped>
 #home {
-  padding-top: 44px;
+  /*padding-top: 44px;*/
+  /*margin-top: 44px;*/
+  position: relative ;
+  height: 100vh;
 }
 
 .home-nav {
@@ -242,9 +277,36 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
   z-index: 9;
 }
 
+.content {
+  /*这个高度不是固定的，不是固定的300px*/
+  /*height: 300px;*/
+  /*overflow: hidden;*/
+
+/*  现在有两种方案来解决
+1. 直接通过计算来解决
+2. 通过定位来解决
+现在通过定位来解决
+*/
+  position: absolute;
+  /*注意，如果它的父元素是有padding的话，这个top就是从
+  padding的位置开始的*/
+  top: 44px;
+  bottom: 49px;
+  /*这个地方，left和right都设置值，是因为为了使得.content这个元素的宽度不是尤其内容撑开，在这里根据那个公式
+  可以计算为，它的宽度为其设置了position非static的元素的最近父元素的宽度的百分之百
+  ，.home这个元素的宽度，在这里又是视口宽度的百分之百*/
+  left: 0;
+  right: 0;
+  overflow:hidden;
+
+  /*height: calc(100% - 93px);
+  overflow: hidden;*/
+}
+
 .tab-control {
   position: sticky;
   top: 44px;
   z-index: 9;
 }
+
 </style>

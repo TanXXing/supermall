@@ -27,6 +27,8 @@ export default {
   methods: {
     itemClick(index) {
       this.currentIndex = index;
+    //  向父组件(home.vue)传递数据(子传父，通过事件进行传递)
+      this.$emit('tabClick', index);
     }
   }
 }
