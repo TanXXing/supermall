@@ -1,6 +1,7 @@
 <template>
-  <div class="goods-item">
-    <img :src="goodsItem.show.img" alt="">
+  <div class="goods-item" @click="itemClick">
+<!-- 这里是在监测”每一张图片“的加载是否完成-->
+    <img :src="goodsItem.show.img" alt="" @load="imageLoad">
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
       <span class="price">¥{{goodsItem.price}}</span>
@@ -18,6 +19,18 @@ export default {
       default() {
         return {}
       }
+    }
+  },
+  methods: {
+    imageLoad() {
+      /*发送事件(但是，这个地方的this.$bus是undefined，
+      要想使用事件总线(是可以用来直接在不同的组件里面发送事件
+      和监听事件的)，我们需要在main.js里面加上这句话
+      Vue.prototype.$bus = new Vue())*/
+      this.$bus.$emit('itemImageLoad')
+    },
+    itemClick() {
+      this.$router.push('/detail/' + this.goodsItem.iid)
     }
   }
 }

@@ -8,7 +8,8 @@ export function request(config) {
   })
 
   // 2.axios的拦截器
-  // 2.1.请求拦截的作用
+  // 2.1.请求拦截的作用 (有个疑问，疑问在于instance.interceptors.request.use()里面的回调函数是同步的吗？如果是同步的话，
+  // 这个里面的return难道不会结束此处request函数的执行吗？)
   instance.interceptors.request.use(config => {
     return config
   }, err => {

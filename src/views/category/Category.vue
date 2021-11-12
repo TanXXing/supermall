@@ -118,15 +118,10 @@ import BScroll from 'better-scroll';
         scroll: null
       }
     },
-    /*created() {
-      const scroll = new BScroll('.wrapper')
-      console.log(scroll)
-    }*/
     mounted() {
       this.scroll = new BScroll(document.querySelector('.wrapper'), {
         click: true
       })
-      console.log(this.scroll)
     },
     methods: {
       btnClick() {

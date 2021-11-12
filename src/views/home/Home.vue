@@ -5,10 +5,20 @@
       <div slot="center">购物街</div>
     </nav-bar>
 
+<!--    这是另外的一个tabcontrol的替身-->
+    <tab-control :titles="['流行', '新款', '精选']"
+                 @tabClick="tabClick"
+                 ref="tabControl1" class="tab-control"
+                   v-show="isTabFixed"/>
+
 <!-- 使用封装好的scroll托管滚动区域-->
-    <scroll class="content" ref="scroll">
+    <scroll class="content"
+            ref="scroll" :probe-type="3"
+            @scroll="contentScroll"
+            :pull-up-load="true"
+            @pullingUp="loadMore">
       <!--使用HomeSwiper组件-->
-      <home-swiper :banners="banners" />
+      <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"/>
 
       <!-- 使用RecommendView这个组件-->
       <recommend-view :recommends="recommends" />
@@ -17,115 +27,16 @@
       <feature-view />
 
       <!-- 使用TabControl组件-->
-      <tab-control :titles="['流行', '新款', '精选']"  class="tab-control" @tabClick="tabClick"/>
+      <tab-control :titles="['流行', '新款', '精选']"
+                   @tabClick="tabClick"
+                   ref="tabControl2" />
 
-      <!--  使用GoodsList这个组件，这个地方的pop是不能写死的，不能进行硬编码-->
+      <!--  使用GoodsList这个组件，这个地方的pop是不能写死的，不能进行硬编码,这个地
+     方用的并不是跳转路由来实现的-->
       <goods-list :goods="showGoods" />
     </scroll>
 
-    <back-top @click.native="backTopClick" />
-<!--    <ul>
-      <li>列表1</li>
-      <li>列表2</li>
-      <li>列表3</li>
-      <li>列表4</li>
-      <li>列表5</li>
-      <li>列表6</li>
-      <li>列表7</li>
-      <li>列表8</li>
-      <li>列表9</li>
-      <li>列表10</li>
-      <li>列表11</li>
-      <li>列表12</li>
-      <li>列表13</li>
-      <li>列表14</li>
-      <li>列表15</li>
-      <li>列表16</li>
-      <li>列表17</li>
-      <li>列表18</li>
-      <li>列表19</li>
-      <li>列表20</li>
-      <li>列表21</li>
-      <li>列表22</li>
-      <li>列表23</li>
-      <li>列表24</li>
-      <li>列表25</li>
-      <li>列表26</li>
-      <li>列表27</li>
-      <li>列表28</li>
-      <li>列表29</li>
-      <li>列表30</li>
-      <li>列表31</li>
-      <li>列表32</li>
-      <li>列表33</li>
-      <li>列表34</li>
-      <li>列表35</li>
-      <li>列表36</li>
-      <li>列表37</li>
-      <li>列表38</li>
-      <li>列表39</li>
-      <li>列表40</li>
-      <li>列表41</li>
-      <li>列表42</li>
-      <li>列表43</li>
-      <li>列表44</li>
-      <li>列表45</li>
-      <li>列表46</li>
-      <li>列表47</li>
-      <li>列表48</li>
-      <li>列表49</li>
-      <li>列表50</li>
-      <li>列表51</li>
-      <li>列表52</li>
-      <li>列表53</li>
-      <li>列表54</li>
-      <li>列表55</li>
-      <li>列表56</li>
-      <li>列表57</li>
-      <li>列表58</li>
-      <li>列表59</li>
-      <li>列表60</li>
-      <li>列表61</li>
-      <li>列表62</li>
-      <li>列表63</li>
-      <li>列表64</li>
-      <li>列表65</li>
-      <li>列表66</li>
-      <li>列表67</li>
-      <li>列表68</li>
-      <li>列表69</li>
-      <li>列表70</li>
-      <li>列表71</li>
-      <li>列表72</li>
-      <li>列表73</li>
-      <li>列表74</li>
-      <li>列表75</li>
-      <li>列表76</li>
-      <li>列表77</li>
-      <li>列表78</li>
-      <li>列表79</li>
-      <li>列表80</li>
-      <li>列表81</li>
-      <li>列表82</li>
-      <li>列表83</li>
-      <li>列表84</li>
-      <li>列表85</li>
-      <li>列表86</li>
-      <li>列表87</li>
-      <li>列表88</li>
-      <li>列表89</li>
-      <li>列表90</li>
-      <li>列表91</li>
-      <li>列表92</li>
-      <li>列表93</li>
-      <li>列表94</li>
-      <li>列表95</li>
-      <li>列表96</li>
-      <li>列表97</li>
-      <li>列表98</li>
-      <li>列表99</li>
-      <li>列表100</li>
-    </ul>-->
+    <back-top @click.native="backTopClick" v-show="isShowBackTop"/>
 
     </div>
 </template>
@@ -160,8 +71,13 @@ import GoodsList from 'components/context/goods/GoodsList'
 
 import BackTop from 'components/context/backTop/BackTop';
 
+//导入src/common/utils.js
+import {debounce} from 'common/utils.js'
+
+
 //导入home.js这个包含请求的模块
 import {getHomeMultidata, getHomeGoods} from 'network/home.js'
+
 
 
   export default {
@@ -187,11 +103,20 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
           sell: {page: 0, list: []},
         },
         //当前类型的默认值
-        currentType: 'pop'
+        currentType: 'pop',
+        isShowBackTop: false,
+
+      //  吸顶效果的参数
+        tabOffsetTop: 0,
+        isTabFixed: false,
+
+      //  跳转路由时，保存位置
+        saveY: 0
       }
     },
     computed: {
       showGoods() {
+        // console.log('计算一次')
         return this.goods[this.currentType].list
       }
     },
@@ -199,15 +124,6 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
     * 是不是立即被推到执行栈上面去执行呢？很显然不是，因为请求是一个异步操作，我们把这个请求放到了一个生命周期函数里面
     * ，这意味者，当这个函数结束的时候(里面的代码被放到执行栈完全执行完之后)，它里面的局部变量会被垃圾回收，那么我们如何获取
     * 请求得到的数据，以及把它打印出来,并保存呢？*/
-    created() {
-      this.getHomeMultidataInMethods()
-
-      //请求商品的数据
-      this.getHomeGoodsInMethods('pop')
-      this.getHomeGoodsInMethods('new')
-      this.getHomeGoodsInMethods('sell')
-    },
-
     methods: {
       tabClick(index) {
         switch(index) {
@@ -217,6 +133,9 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
                   break;
           case 2: this.currentType = 'sell';
         }
+        //是两个真的tabcontrol和替身tabcontrol统一起来
+        this.$refs.tabControl1.currentIndex = index;
+        this.$refs.tabControl2.currentIndex = index;
       },
 
       /*下面是请求数据的方法*/
@@ -247,13 +166,82 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
           //...运算符的扩展作用
           this.goods[type].list.push(...res.data.list)
           this.goods[type].page++
+          /*在这里去拿到home.vue的子组件里面的data里面的scroll，为了面向组件编程（体现封装思想），
+          因此，我们调用了自己对better-scroll的finishPullUp进一步封装的方法*/
+
+          //完成上拉加载更多
+          this.$refs.scroll.finishPullUp()
         })
       },
 
       backTopClick() {
         // this.$refs.scroll.scroll.scrollTo(0,0, 500)
         this.$refs.scroll.scrollTo(0, 0, 1000)
+      },
+
+      contentScroll(position) {
+          //1. 判断是否返回顶部
+          this.isShowBackTop = (-position.y) > 1000
+
+      //  2. 实现tabcontrol的吸顶效果
+          this.isTabFixed = (-position.y) > this.tabOffsetTop
+      },
+
+      //  上拉加载更多
+      loadMore() {
+        this.getHomeGoodsInMethods(this.currentType)
+      },
+
+      swiperImageLoad() {
+        this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
+        /*打印tabControl的相对偏移的父亲，但是，这个属性是要求该父亲是设置了position为非static的吗？
+        答案：是的*/
       }
+    },
+
+    created() {
+      this.getHomeMultidataInMethods();
+
+      //请求商品的数据
+      this.getHomeGoodsInMethods('pop');
+      this.getHomeGoodsInMethods('new');
+      this.getHomeGoodsInMethods('sell');
+    },
+    mounted() {
+
+      // console.log(this)
+
+      /*获取到那个闭包对象(但是，按道理说，mounted的生命周期结束以后，refresh作为
+      一个局部变量，会被释放，于是它所指的函数对象也会被当做垃圾对象给释放，
+      但是，在这个mounted里面，是产生了闭包的this.$bus.$on里面的回调函数里面引用了refresh这个
+      变量，)*/
+      const refresh = debounce(this.$refs.scroll.refresh, 100)
+
+      this.$bus.$on('itemImageLoad', () => {
+        refresh()
+      })
+
+    },
+    destroyed() {
+      console.log('组件被销毁')
+    },
+    //使用activated和deactivated时，意味着对该路由组件使用了keep-alive
+    activated() {
+    //  当发生路由又跳转到home.vue时，直接改变滚动位置
+        this.$refs.scroll.scrollTo(0, this.saveY, 0)
+
+        //进行一次刷新
+        this.$refs.scroll.refresh()
+    },
+    deactivated() {
+    /* 思考一个问题，为什么这个地方的记录位置写在deactivated这个生命周期函数就可以了呢？ 但是，之前的
+    例子中，就不能写在deactivated里面了呢？*/
+
+    /*离开home.vue组件时，记录该组件离开时的位置(注意，由于该项目的特殊性，home.vue里面
+    真正能够滑动的东西就是scroll组件里面的东西，于是，记录位置，我们只需要记录下离开home.vue组件时
+    scroll这个实例对象的滑动距离就可以了，这个可以通过this.$refs.scroll.scroll.y（也就是拿到better-scroll实例化
+    对象.y属性，通过打印scroll这个对象就可以看到里面包含的东西）)*/
+      this.saveY = this.$refs.scroll.getScrollY()
     }
   }
 </script>
@@ -270,11 +258,17 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
   background-color: var(--color-tint);
   color: #fff;
 
-  position: fixed;
+  /*之前homeNav需要使用固定定位，是因为，之前使用的是浏览器的原生滚动(此时，需要homeNav不随着网页的滚动而滚动的话，
+  那么，就需要使得home.vue是相对于视口定位)*/
+
+  /*better-scroll能够实现局部滚动(在某个给定的wrapper的范围内，使得位于wrapper内的有效子元素实现局部滚动)
+  本项目中，scroll组件的使用，使得，homeNav不需要使用相对于视口的固定定位了，当homeNav处于正常文档流时
+  homeNav下面的东西，仍然是可以实现局部滚动的，这就是better-scroll实现局部滚动的好处*/
+  /*position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  z-index: 9;
+  z-index: 9;*/
 }
 
 .content {
@@ -301,11 +295,14 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
 
   /*height: calc(100% - 93px);
   overflow: hidden;*/
+
+
 }
 
-.tab-control {
-  position: sticky;
-  top: 44px;
+/*替身tabcontrol*/
+.tab-control{
+  /*这里需要改变tabcontrol的层级，使用定位，但是，这里不需要使用absolute或者是fixed*/
+  position: relative;
   z-index: 9;
 }
 
