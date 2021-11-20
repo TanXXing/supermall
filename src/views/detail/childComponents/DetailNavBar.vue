@@ -29,6 +29,8 @@ export default {
   methods: {
     titleClick(index) {
       this.currentIndex = index
+      // 向Detail.vue里面传递数据
+      this.$emit('themeClick', index)
     },
     backClick() {
       this.$router.go(-1)

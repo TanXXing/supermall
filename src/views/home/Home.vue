@@ -78,7 +78,8 @@ import {debounce} from 'common/utils.js'
 //导入home.js这个包含请求的模块
 import {getHomeMultidata, getHomeGoods} from 'network/home.js'
 
-
+// 导入混入对象
+import {itemMixin} from 'common/mixin.js'
 
   export default {
     name: "Home",
@@ -92,6 +93,7 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
       Scroll,
       BackTop
     },
+    mixins: [itemMixin],
     data() {
       return {
         // results: null
@@ -111,7 +113,10 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
         isTabFixed: false,
 
       //  跳转路由时，保存位置
-        saveY: 0
+        saveY: 0,
+
+        // 在这里保存一个事件处理函数itemImgListener(此处已经放在混入对象里面了)
+        /* itemImgListener: null */
       }
     },
     computed: {
@@ -215,12 +220,18 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
       一个局部变量，会被释放，于是它所指的函数对象也会被当做垃圾对象给释放，
       但是，在这个mounted里面，是产生了闭包的this.$bus.$on里面的回调函数里面引用了refresh这个
       变量，)*/
-      const refresh = debounce(this.$refs.scroll.refresh, 100)
+      // const refresh = debounce(this.$refs.scroll.refresh, 100)
 
-      this.$bus.$on('itemImageLoad', () => {
+     /*  console.log('想要看下，这个里面的this指的是谁', this); */
+
+      /* this.itemImgListener =  () => {
         refresh()
-      })
+      }
 
+      
+      this.$bus.$on('itemImageLoad', this.itemImgListener)
+ */
+      // console.log(this.$refs.scroll.$el);
     },
     destroyed() {
       console.log('组件被销毁')
@@ -242,6 +253,21 @@ import {getHomeMultidata, getHomeGoods} from 'network/home.js'
     scroll这个实例对象的滑动距离就可以了，这个可以通过this.$refs.scroll.scroll.y（也就是拿到better-scroll实例化
     对象.y属性，通过打印scroll这个对象就可以看到里面包含的东西）)*/
       this.saveY = this.$refs.scroll.getScrollY()
+
+
+      // 由于Home.vue这个组件被keep-alive了,因此，当发生路由跳转后，它会执行deactivated这个生命周期函数
+      //所以，我们可以在这个时候去取消对图片加载事件的监听
+      // this.$bus.$on(取消事件监听的名字，取消对应事件监听的处理函数)
+      // 如果，你只在this.$bus.$off里面写了第一个参数，那么，意味着，这会取消所有的关于itemImageLoad的事件
+      //监听，为了具体取消哪一个，我们可以通过后面的处理函数的不同，实现取消同一事件监听下的，不同的处理函数的操作(因为关键
+      //在于操作的不同)
+
+      // 那么问题，又来了，这意味着，这个处理函数在开始监听和取消监听的时候都需要使用
+      // 因此，最好，我们把这个函数给保留下来，如果不保留下来，直接使用匿名函数的话，也就是
+      // ()= {}，那么在两次使用() => {}这个的时候，这不能保证在开始监听和取消监听的时候，是同一个事件处理函数
+      //  this.$bus.$off('itemImageLoad', this.itemImgListener) 
+
+      // console.log('离开了Home.vue组件');
     }
   }
 </script>

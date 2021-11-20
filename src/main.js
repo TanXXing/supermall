@@ -15,10 +15,14 @@ new Vue({
 
 
 
-/*setTimeout(() => {
+/* setTimeout(() => {
   console.log(this) //undefined
 }, 200)
 
 setTimeout(function() {
   console.log(this) //window
-}, 200)*/
+}, 200)
+
+
+console.log(this); */
+

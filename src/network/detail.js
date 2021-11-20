@@ -11,6 +11,15 @@ export function getDetail(iid) {
   })
 }
 
+// 获取Recommend数据
+export function getRecommend() {
+  return request({
+    url: '/recommend'
+  })
+}
+
+
+
 // 利用面向对象编程的思想对在Detail组件里面获取到的数据进行整合，方便其子组件在同一个对象中获取数据
 // 获取商品信息
 export class Goods {
