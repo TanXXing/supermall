@@ -1,4 +1,6 @@
 import {debounce} from 'common/utils.js';
+import BackTop from 'components/context/backTop/BackTop'
+import { BACKTOP_DISTANCE } from 'common/const';
 
 // 创建混入对象mixin
 export const itemMixin = {
@@ -21,7 +23,7 @@ export const itemMixin = {
       // 看防抖是不是起作用了是要看那个封装好的debounce里面的setTimeout函数里面的异步回调函数打印了多少次
     }
 
-    
+
     this.$bus.$on('itemImageLoad', this.itemImgListener)
 
   },
@@ -29,6 +31,27 @@ export const itemMixin = {
     return {
       // 混入：变量
     itemImgListener: null,
+    }
+  }
+}
+
+
+export const backTopMixin = {
+  data() {
+    return {
+      isShowBackTop: false
+    }
+  },
+  components: {
+    BackTop
+  },
+  methods: {
+    backTopClick() {
+      this.$refs.scroll.scrollTo(0, 0, 1000);
+    },
+
+    isBackTop(position){
+      this.isShowBackTop = (position) > BACKTOP_DISTANCE;
     }
   }
 }

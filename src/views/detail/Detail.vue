@@ -11,8 +11,8 @@
       <detail-comment-info ref="comment" :comment-info="commentInfo"/>
       <goods-list ref="recommend" :goods="recommendInfo"/>
     </scroll>
-    <detail-bottom-bar/>
-    <back-top v-if="isShowBackTop" @click.native="detailBackTop"/>
+    <back-top v-if="isShowBackTop" @click.native="backTopClick"/>
+    <detail-bottom-bar @addToCart="addToCart"/>
   </div> 
 </template>
 
@@ -32,13 +32,15 @@ import GoodsList from 'components/context/goods/GoodsList'
 import BackTop from 'components/context/backTop/BackTop'
 
 import {debounce} from 'common/utils'
-import {BACKTOP_DISTANCE} from 'common/const.js'
+
+import {ADD_CART} from "store/mutations-types"
+
 
 // 导入detail.js向服务器获取数据
 import {getDetail, getRecommend, Goods, Shop, GoodsParam} from 'network/detail'
 
 // 导入混入对象
-import {itemMixin} from 'common/mixin.js'
+import {itemMixin, backTopMixin} from 'common/mixin.js'
 
 
 
@@ -57,7 +59,7 @@ export default {
     BackTop,
     Scroll
   },
-  mixins: [itemMixin],
+  mixins: [itemMixin, backTopMixin],
   data() {
     return {
       /* 在这里把点击某个图片之后，获取这个图片的一个id之后，并保存了起来，因为，这是为了方便后面根据这个唯一的标识
@@ -79,7 +81,6 @@ export default {
       getItemOffsetTop: null,
       probeType: 3,
       currentIndex: 0, 
-      isShowBackTop: false
     }
   },
   created() {
@@ -87,6 +88,7 @@ export default {
 
     // 在跳转页面的时候，同时向服务器发起请求以获得数据，为后面的展示做准备
     getDetail(this.iid).then((res) => {
+      console.log(res);
 
       const data = res.result
 
@@ -106,7 +108,7 @@ export default {
       this.paramInfo = new GoodsParam(data.itemParams.info, data.itemParams.rule)
 
       // 6.获取评论的信息
-      if(data.rate.crate !== 0) {
+      if(data.rate.cRate !== 0) {
         this.commentInfo = data.rate.list[0]
       }
 
@@ -205,7 +207,7 @@ export default {
     // 但是这样并不好，这相当于每次加载完一张图片之后，就会进行一次refresh
     // 考虑到手机屏幕的长度有限，这部分的图片需要滑动才能看到，因此，可以采取，当所有的这个图片加载完后，再refresh
     goodsImgLoad() {
-      // this.$refs.scroll.refresh()
+      this.$refs.scroll.refresh()
       // 图片每次刷新后，重新求offsetTop，先清空，然后再重新求距离(注意数据的响应式问题)
      
 
@@ -290,14 +292,38 @@ export default {
             this.$refs.detailNavBar.currentIndex = i;
           }
         }
-
-
-        this.isShowBackTop = positionY > BACKTOP_DISTANCE ? true : false;
-
+        this.isBackTop(positionY);
       // }
     },
-    detailBackTop() {
-      this.$refs.scroll.scrollTo(0, 0, 1000);
+    addToCart() {
+      /* 在Detail.vue里面对在DetailBottomBar.vue里面点击加入购物车后，在Detail.vue里面进行数据的整合 
+      ，然后，让其它组件进行显示(可以是该组件的其它子组件(一般通过props传递数据)，也可以是其它非其子组件(通过
+      vuex来共享数据)),思考，那么这里为什么不能使用事件总线来传递数据呢？(因为，此时是在Detail.vue这个组件里面
+      进行数据提取的，如果，通过事件总线来传递数据的话，难道我一定可以在购物车这个对应的组件里面接收到这个发出的事件
+      总线吗？也就是说，我在Detail.vue这个组件里面通过事件总线发出事件的时候，那个购物车对应的组件可能还没有
+      创建，因此，可能接受不到它通过事件总线发出的事件，这也就是为什么这里不能使用事件总线的原因)
+      */
+    /* 这里是先对需要展示的数据，进行一个整理 */
+    // 1.创建对象
+        const product = {}
+        // 2.对象信息
+        product.iid = this.iid;
+        product.image = this.topImages[0]
+        product.title = this.goods.title;
+        product.desc = this.goods.desc;
+        product.price = this.goods.lowPrice;
+
+        // console.log(product);
+
+        // 判断商品是否加入成功的正确操作
+        this.$store.dispatch(ADD_CART, product).then((res) => {
+          // console.log(res);
+          this.$toast.showMessage(res)
+        })
+
+        /* 在这里些添加商品至购物车成功？显然不行，因为，这里只能知道我们把商品的信息给整合了，至于
+        商品是否加入至购物车，不得而知*/
+        // console.log('添加商品成功');
     }
   }
 }

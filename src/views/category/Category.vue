@@ -109,33 +109,34 @@
 
 <script>
 //导入better-scroll这个第三方包
-import BScroll from 'better-scroll';
+import BScroll from "better-scroll";
 
-  export default {
-    name: "Category",
-    data() {
-      return {
-        scroll: null
-      }
+export default {
+  name: "Category",
+  data() {
+    return {
+      scroll: null,
+    };
+  },
+  mounted() {
+    this.scroll = new BScroll(document.querySelector(".wrapper"), {
+      click: false,
+      probeType: 0,
+    });
+  },
+  methods: {
+    btnClick() {
+      console.log("点了吗");
     },
-    mounted() {
-      this.scroll = new BScroll(document.querySelector('.wrapper'), {
-        click: true
-      })
+    divClick() {
+      console.log("点了吗");
     },
-    methods: {
-      btnClick() {
-        console.log('点了吗')
-      },
-      divClick() {
-        console.log('点了吗')
-      }
-    }
-  }
+  },
+};
 </script>
 
 <style scoped>
-.wrapper{
+.wrapper {
   height: 100px;
   background-color: red;
   overflow: hidden;

@@ -18,7 +18,7 @@ export function debounce(func, delay) {
       // console.log(this) //为什么是这里的this是undefined呢？
 
       // console.log('这个打印了多少次，就可以看出来，防抖是否起作用了'); //这个地方才能看出防抖是否起作用了
-      /* 
+      /*
       为什么在setTimeout里面的这个地方才能看出来防抖是否起作用了呢？
       因为，setTimeout里面的这个函数意味着在一定的delay之后，才会进行某种未进行防抖时才会频繁执行的操作，
       当在这个delay期间，function(...args) {}这个函数一致没有被触发的话，那么timer就不会被清空(clearTimeout(timer)),
